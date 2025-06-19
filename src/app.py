@@ -883,11 +883,14 @@ def generar_reporte_resumido(index, fila, usuario_id, empresa_id, origen_documen
         )
         informe = response.generations[0].text.strip()
         """
-
-        response = openai.Completion.create(
+    
+        response = openai.ChatCompletion.create(
             model="gpt-4o-mini",  
-            prompt=prompt,  # El texto de entrada
-            max_tokens=600  # Número máximo de tokens en la respuesta
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=600,
+            temperature=0.4
         )
 
         informe = response.choices[0].message.content.strip()
