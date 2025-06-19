@@ -853,10 +853,6 @@ def crear_docx_resumido(nombre_archivo, datos_resumen, informe_texto, graficos=N
         return False
 
 
-from openai import OpenAI
-import os
-import pandas as pd
-
 def generar_reporte_resumido(index, fila, usuario_id, empresa_id, origen_documento, nombre_documento_origen, requisitos_extraidos=None, reintentos=3, espera_base=2):
     try:
         # Filtramos los datos del candidato
@@ -1233,18 +1229,21 @@ def generar_grafico_barras(datos, campos, titulo, nombre_archivo, usar_escala=Fa
 
 def generar_informe_y_pdf(index, fila, usuario_id, empresa_id, origen_documento, nombre_documento_origen, reintentos=3, espera_base=2):
     try:
+        # Filtramos los datos del candidato
         datos_candidato = {
             mapear_columna(col): fila[col]
             for col in fila.index
             if pd.notna(fila[col]) and str(fila[col]).strip() != ""
         }
 
+        # Buscar el nombre del candidato
         columna_nombre = next((col for col in fila.index if "nombre" in col.lower()), None)
         nombre_candidato = str(fila[columna_nombre]) if columna_nombre and pd.notna(fila[columna_nombre]) else f"candidato_{index+1}"
         nombre_archivo_base = limpiar_nombre(nombre_candidato)
         nombre_archivo_pdf = nombre_archivo_base + ".pdf"
         nombre_archivo_docx = nombre_archivo_base + ".docx"
 
+        # Rutas de archivo
         ruta_pdf = os.path.join(PDF_FOLDER, nombre_archivo_pdf)
         ruta_docx = os.path.join(PDF_FOLDER, nombre_archivo_docx)
 
@@ -1258,32 +1257,26 @@ def generar_informe_y_pdf(index, fila, usuario_id, empresa_id, origen_documento,
 
         print(f"Procesando candidato {index + 1}: {nombre_candidato}")
 
+        # Filtrar los datos para crear el prompt
         datos_prompt = {k: v for k, v in datos_candidato.items() if k not in [
             "Nombre Completo", "Edad", "Estado civil", "Teléfono", "Evaluador", "Grado de Instruccion",
             "Carrera", "Puesto Postulado", "Fecha de evaluación", "Correo Electrónico"]}
 
         prompt = construir_prompt(datos_prompt, nombre_candidato)
 
-        """
-        response = co.generate(
-            model="command-r-plus",
+        # Crear una instancia del cliente OpenAI
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+        # Llamada a la API para generar el informe
+        response = client.completions.create(
+            model="gpt-4o-mini",  # Usar un modelo válido como 'gpt-4'
             prompt=prompt,
             max_tokens=800,
             temperature=0.4
         )
-        informe = response.generations[0].text.strip()
-        """
 
-        response = openai.completions.create(
-            model="gpt-4o-mini",  
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=800,
-            temperature=0.4
-        )
-
-        informe = response.choices[0].message.content.strip()
+        # Acceder al texto generado en la respuesta
+        informe = response.choices[0].text.strip()
 
         # Generar PDF
         crear_pdf(nombre_archivo_pdf, datos_candidato, informe)
@@ -1325,8 +1318,6 @@ def generar_informe_y_pdf(index, fila, usuario_id, empresa_id, origen_documento,
         print(f"[Error] Índice {index}: {e}")
         return False
 
-
-
 #-------------------------------------
 # Funciones para reporte comparativo
 #-------------------------------------
@@ -1354,32 +1345,24 @@ def construir_prompt_comparativo(lista_datos):
 
 def generar_texto_comparativo(prompt):
     try:
-        """
-        response = co.generate(
-            model="command-r-plus",
+        # Crear una instancia del cliente OpenAI
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+        # Llamada a la API para generar el texto comparativo
+        response = client.completions.create(
+            model="gpt-4o-mini",  # Usa un modelo válido como 'gpt-4'
             prompt=prompt,
             max_tokens=2500,
-            temperature=0.7,
-            stop_sequences=["--"],
-        )
-        texto = response.generations[0].text.strip()
-        """
-
-        response = openai.completions.create(
-            model="gpt-4o-mini",  
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=2500,
             temperature=0.4,
-            stop=["--"],
+            stop=["--"]
         )
 
-        texto = response.choices[0].message.content.strip()
+        # Acceder al texto generado en la respuesta (usando el atributo 'text' directamente)
+        texto = response.choices[0].text.strip()  # Accedemos al 'text' de la elección generada
 
         return texto
     except Exception as e:
-        print("Error al generar texto comparativo con Cohere:", e)
+        print("Error al generar texto comparativo con OpenAI:", e)
         return "No se pudo generar el informe comparativo."
 
 def crear_grafico_barras_comparativo(datos_candidatos, nombre_archivo):
