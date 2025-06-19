@@ -13,3 +13,4 @@ fitz
 python-docx
 pdfplumber
 openai
+psycopg2-binary

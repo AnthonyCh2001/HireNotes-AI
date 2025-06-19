@@ -68,8 +68,7 @@ app.config['CHART_FOLDER'] = os.path.join(BASE_DIR, 'charts')
 load_dotenv()
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(
-    openai_api_key)
+openai.api_key = openai_api_key
 # Manejo de variables del excel
 MAPA_PDFS_PATH = os.path.join(PDF_FOLDER, 'mapa_pdfs.json')
 def cargar_mapa_pdfs():
@@ -884,7 +883,7 @@ def generar_reporte_resumido(index, fila, usuario_id, empresa_id, origen_documen
         informe = response.generations[0].text.strip()
         """
 
-        response = client.chat.completions.create(
+        response = openai.completions.create(
             model="gpt-4.1",  
             messages=[
                 {"role": "user", "content": prompt}
@@ -1270,7 +1269,7 @@ def generar_informe_y_pdf(index, fila, usuario_id, empresa_id, origen_documento,
         informe = response.generations[0].text.strip()
         """
 
-        response = client.chat.completions.create(
+        response = openai.completions.create(
             model="gpt-4o-mini",  
             messages=[
                 {"role": "user", "content": prompt}
@@ -1361,7 +1360,7 @@ def generar_texto_comparativo(prompt):
         texto = response.generations[0].text.strip()
         """
 
-        response = client.chat.completions.create(
+        response = openai.completions.create(
             model="gpt-4o-mini",  
             messages=[
                 {"role": "user", "content": prompt}
