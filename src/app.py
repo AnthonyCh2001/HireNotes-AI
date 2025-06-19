@@ -853,49 +853,51 @@ def crear_docx_resumido(nombre_archivo, datos_resumen, informe_texto, graficos=N
         return False
 
 
+from openai import OpenAI
+import os
+import pandas as pd
+
 def generar_reporte_resumido(index, fila, usuario_id, empresa_id, origen_documento, nombre_documento_origen, requisitos_extraidos=None, reintentos=3, espera_base=2):
     try:
+        # Filtramos los datos del candidato
         datos_candidato = {
             mapear_columna(col): fila[col]
             for col in fila.index
             if pd.notna(fila[col]) and str(fila[col]).strip() != ""
         }
 
+        # Buscar el nombre del candidato
         columna_nombre = next((col for col in fila.index if "nombre" in col.lower()), None)
         nombre_candidato = str(fila[columna_nombre]) if columna_nombre and pd.notna(fila[columna_nombre]) else f"candidato_{index+1}"
         nombre_archivo_pdf = limpiar_nombre(nombre_candidato) + "_resumido.pdf"
         ruta_pdf = os.path.join(PDF_FOLDER, nombre_archivo_pdf)
 
+        # Si el archivo PDF ya existe, lo eliminamos antes de crear uno nuevo
         if os.path.exists(ruta_pdf):
             print(f"{nombre_archivo_pdf} ya existe, será actualizado.")
             os.remove(ruta_pdf)
 
         print(f"Procesando reporte psicotécnico resumido candidato {index + 1}: {nombre_candidato}")
 
+        # Construir el prompt para el modelo de GPT
         prompt = construir_prompt_resumido(datos_candidato, nombre_candidato, requisitos_extraidos)
 
-        """
-        response = co.generate(
-            model="command-r-plus",
+        # Crear una instancia del cliente OpenAI
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+        # Llamada a la API de OpenAI para generar el informe
+        response = client.completions.create(
+            model="gpt-4o-mini",  # Asegúrate de usar un modelo válido como 'gpt-4'
             prompt=prompt,
             max_tokens=600,
             temperature=0.4
         )
-        informe = response.generations[0].text.strip()
-        """
-    
-        response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",  
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=600,
-            temperature=0.4
-        )
 
-        informe = response.choices[0].message.content.strip()
+        # Acceder al texto generado en la respuesta (usando el método .model_dump())
+        informe = response.choices[0].text.strip()  # Usamos el atributo 'text' en lugar de 'message' directamente
         print(f"[DEBUG] Informe generado para {nombre_candidato}:\n{informe}")
 
+        # Generación de gráficos
         graficos = []
         try:
             competencias_blandas = ["Comunicación", "Trabajo en equipo", "Liderazgo", "Resiliencia"]
@@ -904,6 +906,7 @@ def generar_reporte_resumido(index, fila, usuario_id, empresa_id, origen_documen
                 "Inteligencia Espacial", "Inteligencia Abstracta"
             ]
 
+            # Generamos los gráficos de competencias blandas y habilidades técnicas
             grafico_blandas = generar_grafico_barras(datos_candidato, competencias_blandas,
                                                       "Competencias", f"{limpiar_nombre(nombre_candidato)}_blandas.png", usar_escala=True)
             grafico_tecnicas = generar_grafico_barras(datos_candidato, habilidades_tecnicas,
@@ -916,19 +919,19 @@ def generar_reporte_resumido(index, fila, usuario_id, empresa_id, origen_documen
         except Exception as e:
             print(f"[Aviso] No se pudieron generar gráficos para {nombre_candidato}: {e}")
 
-        # Crear PDF
+        # Crear el PDF con los datos generados
         exito_pdf = crear_pdf_resumido(nombre_archivo_pdf, datos_candidato, informe, graficos,
-                                    usuario_id, empresa_id, origen_documento, nombre_documento_origen,
-                                    requisitos_extraidos=requisitos_extraidos)
+                                       usuario_id, empresa_id, origen_documento, nombre_documento_origen,
+                                       requisitos_extraidos=requisitos_extraidos)
         if not exito_pdf:
             print(f"[Error] No se pudo crear PDF resumido para {nombre_candidato}")
             return False
 
-        # Crear Word
+        # Crear el documento Word
         crear_docx_resumido(nombre_archivo_pdf, datos_candidato, informe, graficos,
                             usuario_id, empresa_id, origen_documento, nombre_documento_origen)
 
-        # Eliminar los gráficos usados (después de ambas creaciones)
+        # Eliminar los gráficos usados después de crear los archivos
         for grafico in graficos:
             if os.path.exists(grafico):
                 os.remove(grafico)
@@ -938,6 +941,7 @@ def generar_reporte_resumido(index, fila, usuario_id, empresa_id, origen_documen
     except Exception as e:
         print(f"[Error] Índice {index} - reporte resumido: {e}")
         return False
+
 
 
 
