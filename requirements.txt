@@ -1,0 +1,15 @@
+Flask
+pymysql
+cohere
+fpdf
+pandas
+openpyxl
+datetime
+matplotlib
+python-dotenv
+reportlab
+pymupdf
+fitz
+python-docx
+pdfplumber
+openai
