@@ -71,6 +71,21 @@ class DAOUsuario:
         finally:
             con.close()
 
+    def insertar_admin_medio(self, nombre, email, contrasena, empresa_id,rol):
+        con = self.connect()
+        cursor = con.cursor()
+        try:
+            cursor.execute("""
+                INSERT INTO usuarios (nombre, email, contrasena, empresa_id,rol)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (nombre, email, contrasena, empresa_id,rol))
+            con.commit()
+        except Exception as e:
+            print(f"[DAOUsuarios] Error al insertar usuario: {e}")
+            raise e
+        finally:
+            con.close()
+
     def obtener_usuario_por_id(self, usuario_id):
         con = self.connect()
         cursor = con.cursor(cursor_factory=psycopg2.extras.DictCursor)
