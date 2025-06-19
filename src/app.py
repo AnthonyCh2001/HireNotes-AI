@@ -66,7 +66,8 @@ app.config['PDF_FOLDER'] = os.path.join(BASE_DIR, 'pdfs')
 app.config['CHART_FOLDER'] = os.path.join(BASE_DIR, 'charts')
 
 load_dotenv()
-
+api_key = os.getenv("CO_API_KEY")
+co = cohere.Client(api_key)
 openai_api_key = os.getenv("OPENAI_API_KEY")
 openai.api_key = openai_api_key
 # Manejo de variables del excel
@@ -884,7 +885,7 @@ def generar_reporte_resumido(index, fila, usuario_id, empresa_id, origen_documen
         """
 
         response = openai.completions.create(
-            model="gpt-4.1",  
+            model="gpt-4o-mini",  
             messages=[
                 {"role": "user", "content": prompt}
             ],
