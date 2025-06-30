@@ -2258,7 +2258,7 @@ def listar_pdfs_comparativo_admin_medio():
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if session.get('user_id'):
-        return redirect(url_for('listar_pdfs')) 
+        return redirect(url_for('listar_pdfs'))
 
     if request.method == 'POST':
         email = request.form['email']
@@ -2271,17 +2271,19 @@ def login():
             session['user_nombre'] = user['nombre']
             session['rol'] = user['rol']
             session['empresa_id'] = user.get('empresa_id')
+            session['requiere_cambio_password'] = user.get('requiere_cambio_password', False)
+            
             if session['empresa_id'] is None:
                 print("[ERROR] empresa_id es None para el usuario:", user)
-            session['empresa_nombre'] = dao_empresas.obtener_nombre_empresa(user['empresa_id'])
-
+            else:
+                session['empresa_nombre'] = dao_empresas.obtener_nombre_empresa(user['empresa_id'])
 
             print("LOGIN - Sesión iniciada:")
             print("user_id:", session.get('user_id'))
             print("empresa_id:", session.get('empresa_id'))
             print("rol:", session.get('rol'))
-            
 
+            # Redirige a la vista correspondiente
             if user['rol'] == 'admin_superior':
                 return redirect(url_for('vista_admin_superior'))
             elif user['rol'] == 'admin_medio':
@@ -2295,6 +2297,30 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+    
+@app.route('/cambiar_password', methods=['POST'])
+def cambiar_password():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
+    nueva_contra = request.form['nueva_contrasena']
+    usuario_id = session['user_id']
+
+    # Actualiza la contraseña y desactiva el requerimiento
+    dao_usuario.actualizar_usuario(usuario_id, nueva_contra, True)
+
+    # También actualiza el campo requiere_cambio_password
+    con = dao_usuario.connect()
+    cur = con.cursor()
+    cur.execute("UPDATE usuarios SET requiere_cambio_password = FALSE WHERE id = %s", (usuario_id,))
+    con.commit()
+    con.close()
+
+    # Limpia el flag en la sesión
+    session['requiere_cambio_password'] = False
+
+    flash("Contraseña actualizada correctamente.", "success")
+    return redirect(url_for('vista_admin_medio'))
+    
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5000)
