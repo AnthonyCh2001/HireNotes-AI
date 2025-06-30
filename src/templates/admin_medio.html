@@ -63,4 +63,34 @@
         });
     });
 </script>
+{% if session.get('requiere_cambio_password') %}
+<div class="modal fade" id="modalCambioPassword" tabindex="-1" aria-labelledby="modalCambioPasswordLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('cambiar_password') }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Cambiar Contraseña</h5>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="nueva_contrasena" class="form-label">Nueva Contraseña</label>
+            <input type="password" class="form-control" name="nueva_contrasena" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+    
+  window.onload = function () {
+    const modal = new bootstrap.Modal(document.getElementById('modalCambioPassword'));
+    modal.show();
+  };
+</script>
+{% endif %}
 {% endblock %}
