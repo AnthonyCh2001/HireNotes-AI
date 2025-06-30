@@ -150,10 +150,10 @@
 
         {% if session.get('rol') == 'usuario' %}
             <a href="{{ url_for('listar_pdfs') }}" class="{% if request.endpoint == 'listar_pdfs' %}active{% endif %}">
-                <i class="fas fa-file-alt"></i> Reportes Clinicos
+                <i class="fas fa-file-alt"></i> Reportes Psicométricos
             </a>
             <a href="{{ url_for('listar_pdfs_resumidos') }}" class="{% if request.endpoint == 'listar_pdfs_resumidos' %}active{% endif %}">
-                <i class="fas fa-columns"></i> Reportes Psicometricos
+                <i class="fas fa-columns"></i> Reportes Resumidos
             </a>
             <a href="{{ url_for('listar_pdfs_comparativos') }}" class="{% if request.endpoint == 'listar_pdfs_comparativos' %}active{% endif %}">
                 <i class="fas fa-columns"></i> Reportes Comparativos
