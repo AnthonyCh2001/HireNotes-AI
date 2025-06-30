@@ -15,7 +15,6 @@
                 <tr>
                     <th class="text-center" style="width: 5%;">#</th>
                     <th>Correo</th>
-                    <th>Contraseña</th>
                     <th class="text-center">Reportes Generados</th>
                     <th class="text-center">Estado</th>
                     <th class="text-center" style="width: 18%;">Acciones</th>
@@ -31,7 +30,6 @@
                 <tr>
                     <td class="text-center">{{ loop.index }}</td>
                     <td>{{ usuario.email }}</td>
-                    <td>{{ usuario.contrasena }}</td>
                     <td class="text-center">{{ usuario.cantidad_reportes }}</td>
                     <td class="text-center">
                         {% if usuario.activo %}
